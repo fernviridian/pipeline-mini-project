@@ -17,11 +17,20 @@ iam roles like crazy
 fargate setup
 security group for access
 aws alb
+
 codebuild - build
 codebuild - test
 codebuild - deploy
 codebuild - post-deploy acceptance test
 codepipeline webhook - https://gist.github.com/joestump/cac3abb94050186fcba1c57c8a880a71
+
+ecs rolling update style doesn't require codedeploy
+
+
+use codedeploy for blue/green deployments?
+- need two task definitions
+- need two target groups
+- 
 
 lookup codebuild log output
 
