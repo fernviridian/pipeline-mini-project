@@ -24,6 +24,6 @@ phases:
       - echo Build completed on `date`
       - echo Pushing the Docker image...
       - docker push $IMAGE_URI
-      - '[{"name":"flask","imageUri":"%s"}]' "$IMAGE_URI" > imagedefinitions.json
+      - printf '[{"name":"flask","imageUri":"%s"}]' "$IMAGE_URI" > imagedefinitions.json
   artifacts:
     files: images.json
