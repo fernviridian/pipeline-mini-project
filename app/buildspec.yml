@@ -25,5 +25,5 @@ phases:
       - echo Pushing the Docker image...
       - docker push $IMAGE_URI
       - printf '[{"name":"flask","imageUri":"%s"}]' "$IMAGE_URI" > imagedefinitions.json
-  artifacts:
-    files: images.json
+artifacts:  
+  files: imagedefinitions.json
