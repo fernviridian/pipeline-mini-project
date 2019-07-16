@@ -33,3 +33,12 @@ variable "poll_source_changes" {
     description = "Poll source code repository for changes. Useful if you cannot configure Github webhooks."
     default = true
 }
+
+variable "app_port" {
+    default = 80
+}
+
+variable "assign_public_ip" {
+    description = "Assign public ip to ECS Fargate Task"
+    default = true
+}

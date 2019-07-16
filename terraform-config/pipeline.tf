@@ -171,29 +171,14 @@ resource "aws_codepipeline" "codepipeline" {
       owner            = "ThirdParty"
       provider         = "GitHub"
       version          = "1"
-      output_artifacts = ["code"]
+      output_artifacts = ["source_output"]
 
-      configuration {
+      configuration = {
         OAuthToken           = "${var.github_oauth_token}"
         Owner                = "${var.repo_owner}"
         Repo                 = "${var.repo_name}"
         Branch               = "${var.branch}"
         PollForSourceChanges = "${var.poll_source_changes}"
-      }
-    }
-  }
-  stage {
-    name = "TestDocker"
-
-    action {
-      name            = "Build"
-      category        = "Build"
-      owner           = "AWS"
-      provider        = "CodeBuild"
-      input_artifacts = ["code"]
-      version         = "1"
-      configuration {
-        ProjectName = "${aws_codebuild_project.codebuild_docker_test.name}"
       }
     }
   }
@@ -206,27 +191,67 @@ resource "aws_codepipeline" "codepipeline" {
       category        = "Build"
       owner           = "AWS"
       provider        = "CodeBuild"
-      input_artifacts = ["code"]
+      input_artifacts = ["source_output"]
+      output_artifacts = ["build_output"]
       version         = "1"
-      configuration {
+      configuration = {
         ProjectName = "${aws_codebuild_project.codebuild_docker_image.name}"
       }
     }
   }
+
   stage {
     name = "Deploy"
 
     action {
       name            = "Deploy"
-      category        = "Build"
+      category        = "Deploy"
       owner           = "AWS"
-      provider        = "CodeBuild"
-      input_artifacts = ["code"]
+      provider        = "ECS"
+      input_artifacts = ["build_output"]
       version         = "1"
-      configuration {
-        ProjectName = "${aws_codebuild_project.codebuild_deploy_on_ecs.name}"
+      configuration = {
+        # configuration values found here https://docs.aws.amazon.com/codepipeline/latest/userguide/reference-pipeline-structure.html#action-requirements
+        ClusterName = "${aws_ecs_cluster.demo.name}"
+        ServiceName = "${aws_ecs_service.flask.name}"
+        FileName = "imagedefinitions.json"
       }
     }
   }
 }
 
+resource "aws_codebuild_project" "codebuild_docker_image" {
+  name         = "codebuild_docker_image"
+  description  = "build & test docker images"
+  build_timeout      = "300"
+  service_role = "${aws_iam_role.iam_code_build_role.arn}"
+
+  artifacts {
+    type = "CODEPIPELINE"
+  }
+  environment {
+    compute_type = "BUILD_GENERAL1_SMALL"
+    image        = "aws/codebuild/docker:17.09.0"
+    type         = "LINUX_CONTAINER"
+    privileged_mode = true
+
+    environment_variable {
+      name  = "AWS_DEFAULT_REGION"
+      value = "${var.aws_region}"
+    }
+    environment_variable {
+      name  = "AWS_ACCOUNT_ID"
+      value = "${data.aws_caller_identity.current.account_id}"
+    }
+    environment_variable {
+      name  = "IMAGE_REPO_NAME"
+      value = "${aws_ecr_repository.flask_app.name}"
+    }
+  }
+
+  source {
+    type            = "CODEPIPELINE"
+    buildspec       = "app/buildspec.yml"
+  }
+
+}
