@@ -122,7 +122,7 @@ resource "aws_ecs_service" "flask" {
 resource "aws_ecs_task_definition" "flask" {
   family                = "flask"
   # Note using nginx:alpine as bootstrap image, real service image will come from CodePipeline build and deploy :)
-  task_role_arn = "${aws_iam_role.iam_ecs_task_role.arn}"
+  execution_role_arn = "${aws_iam_role.iam_ecs_task_role.arn}"
   requires_compatibilities = ["FARGATE"]
   network_mode = "awsvpc"
   cpu = 256

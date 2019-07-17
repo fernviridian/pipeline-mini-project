@@ -37,7 +37,9 @@ resource "aws_iam_role_policy" "iam_codepipeline_policy" {
         {
             "Action": [
                 "codebuild:StartBuild",
-                "codebuild:BatchGetBuilds"
+                "codebuild:BatchGetBuilds",
+                "ecs:*",
+                "iam:PassRole"
             ],
             "Resource": "*",
             "Effect": "Allow"
@@ -47,6 +49,9 @@ resource "aws_iam_role_policy" "iam_codepipeline_policy" {
 EOF
 }
 
+# WAT
+# ALSO WHY do i have to iam passrole to get error messages around here?!!
+# Fargate requires task definition to have execution role ARN to support ECR images.
 
 resource "aws_iam_role" "iam_code_build_role" {
   name = "iam_code_build_role"
@@ -210,6 +215,7 @@ resource "aws_codepipeline" "codepipeline" {
       provider        = "ECS"
       input_artifacts = ["build_output"]
       version         = "1"
+      
       configuration = {
         # configuration values found here https://docs.aws.amazon.com/codepipeline/latest/userguide/reference-pipeline-structure.html#action-requirements
         ClusterName = "${aws_ecs_cluster.demo.name}"
