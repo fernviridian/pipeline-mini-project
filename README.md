@@ -1,1 +1,165 @@
-# miniproject-REICHERT-BEN
+# Introduction
+
+This project creates a Python Flask application, packaged in Docker, that is tested and deployed with AWS CodePipeline to AWS Elastic Container Service Fargate. It is designed to demonstrate application development, Continuous Integration (CI), and Continous Deployment (CD) on Amazon Web Services (AWS).  
+
+![](./images/diagram.png)
+
+![](./images/pipeline.png)
+
+The following AWS services are used:
+* CodePipeline
+* CodeBuild
+* Elastic Container Service (ECS) - Fargate
+* Application Load Balancer (ALB)
+* Elastic Container Registry (ECR)
+* Virtual Private Cloud (VPC) (subnet, route, security groups, etc)
+* Identity and Access Management (IAM)
+
+Deployment Software used:
+* Terraform (https://terraform.io)
+* Docker (https://docker.com)
+* GitHub (https://github.com)
+
+# Requirements
+
+Stelligent Mini-Project
+
+This is your chance to WOW us and showcase your experience! Build an application in the
+programming language of your choice that exposes a REST endpoint that returns a following
+JSON payload with the current timestamp and a static message:
+
+```
+{
+“message”: “Automation for the People”,
+“timestamp”: 1529611161
+}
+```
+
+Write code in a programming language (or languages, configuration management platforms,
+etc.) of your choice that provisions an environment in AWS to run the application you built.
+Requirements:
+
+* AWS must be the target infrastructure.
+    * Should be able to run in any AWS account.
+* Single Command/One-Click launch of environment.
+    * Some prerequisites are OK as long as it is properly documented.
+* Commit all code to the private repository that is provided for you in Github.
+* Include a README.MD containing detailed directions on how to run, what is running, and how to cleanup.
+* Include some form of automated tests. Demonstrate a test-first mentality.
+
+
+# Setup Instructions
+
+First things first, clone this repository!
+
+## GitHub
+
+We need to create a Github token to allow CodePipeline to poll for source code updates on our behalf. Alternative configurations would allow setting up webhooks for source code updates, but due to the project nature settings for webhooks were restricted. In this case, we will have CodePipeline poll GitHub for code changes automatically. To create a token to to the following link:
+
+https://github.com/settings/tokens
+
+Go to GitHub's Token Settings to generate your token and ensure you enable the following scope:
+
+    repo, which is used to read and pull artifacts from public and private repositories into a pipeline
+
+Store the GitHub token in safe place (like a password manager), since we will need it in a few moments when we deploy Terraform configuration.
+
+## Application
+
+Endpoints:
+
+* `GET /` - returns hostname (in this case container id)
+* `GET /time` - returns json payload described above with message and timestamp
+
+## AWS
+
+An IAM user is required to run Terraform configuration. The following IAM Permissions are required for deployment (these permissions may be a bit off, since testing has been done with a Administrator user):
+
+* `ecr:*`
+* `ecs:*`
+* `iam:*`
+* `codebuild:*`
+* `ec2:*`
+* `ecs:*`
+* `codepipeline:*`
+
+You must configure your IAM Access Key/Secret Key pair to work with Terraform. Documentation from Terraform is available [here](https://www.terraform.io/docs/providers/aws/index.html) and from AWS [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html). For the purposes of this Demo, using a `~/.aws/credentials` file with the following format will work great:
+
+```
+[default]
+aws_access_key_id = <redacted>
+aws_secret_access_key = <redacted>
+```
+
+## Terraform
+
+This demo uses [Terraform](https://www.terraform.io/) for infrastructure-as-code configuration to configure AWS resources for the deployment pipeline.
+
+We can install T erraform from https://www.terraform.io/downloads.html, but for this demo, version `0.12.4` was used. The following links are for Linux and Mac, respectively:
+* (MacOS) https://releases.hashicorp.com/terraform/0.12.4/terraform_0.12.4_darwin_amd64.zip
+* (Linux) https://releases.hashicorp.com/terraform/0.12.4/terraform_0.12.4_linux_amd64.zip
+
+You can download these files and install Terraform in the proper location with the following commands (from the root of the github repository you previously cloned):
+```
+# in the root of the github project
+# substitute url with above download urls if not using Linux
+wget https://releases.hashicorp.com/terraform/0.12.4/terraform_0.12.4_linux_amd64.zip
+unzip terraform_0.12.4_linux_amd64.zip 
+chmod u+x terraform
+```
+
+Now, we need to move to the Terraform configuration and initialize the Terraform modules with these commands:
+
+```
+cd terraform-config
+../terraform init
+```
+
+Now for the fun part! One "click" deploy with the following command:
+```
+# when prompted, type yes to deploy resources
+../terraform apply
+```
+
+Terraform will output the Load Balancer URL of the application, which can be visited in a browser. Alternatively you can use `curl` to make requests to the new API:
+
+```
+curl <load balancer url>/time
+```
+
+Please note that the project uses a nginx server as a placeholder while the first service docker image is built and deployed. You may have to manually trigger the pipeline to deploy the flask application. You can do this by going to the AWS Console (https://console.aws.amazon.com), signing in, and navigating to CodePipeline --> demo --> Click "Release Change" and confirm with "Release". This will "kick" the pipeline off again, resulting in a deployment after tests and packaging stages are completed.
+
+
+# Future Improvements
+
+- load balancer
+- multiple instances -high availability
+- security testing
+- end ui/selnium testing
+- nice dns
+- post deploy acceptance test
+- blue/green deployment with codedeploy
+- better security groups
+- multiple environments (dev,stage,prod)
+- seperate linting and unit testing into distinct pipeline components
+- use setup.py script to separate dev and prod dependencies
+- flask version between test and run container better in sync
+- use branching strategy instead of just master
+- generalize terraform configuration with modules (didnt want to do that for easy following without breaking files up for the time being)
+- terratest
+- alarms based on failures
+- use lambda post deploy validation test https://docs.aws.amazon.com/codedeploy/latest/userguide/reference-appspec-file-structure-hooks.html#appspec-hooks-ecs
+
+# Resources
+
+* https://aws.amazon.com/blogs/devops/use-aws-codedeploy-to-implement-blue-green-deployments-for-aws-fargate-and-amazon-ecs/
+* https://medium.com/@vankhoa011/how-to-apply-ci-cd-by-using-github-codebuild-codepipeline-and-ecs-58192b8322a9
+* https://www.reddit.com/r/devops/comments/ajkdro/how_to_apply_cicd_by_using_github_codebuild/
+* https://github.com/vankhoa011/demo-cicd-codepipeline/blob/master/web/deploy.sh
+* https://aws.amazon.com/blogs/compute/continuous-deployment-to-amazon-ecs-using-aws-codepipeline-aws-codebuild-amazon-ecr-and-aws-cloudformation/
+* https://github.com/awslabs/ecs-refarch-continuous-deployment/blob/master/templates/deployment-pipeline.yaml
+* https://github.com/cloudposse/terraform-aws-cicd
+* https://github.com/jasonumiker/clair-ecs-fargate/blob/master/buildspec.yml
+* https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-cd-pipeline.html
+* https://medium.com/@bradford_hamilton/deploying-containers-on-amazons-ecs-using-fargate-and-terraform-part-2-2e6f6a3a957f
+

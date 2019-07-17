@@ -20,10 +20,8 @@ codebuild - test
 codebuild - deploy
 TODO
 
-iam roles like crazy
+logging working??
 aws alb
-
-
 codebuild - post-deploy acceptance test
 # wont work since dont have webhook access :( codepipeline webhook - https://gist.github.com/joestump/cac3abb94050186fcba1c57c8a880a71
 
@@ -44,6 +42,7 @@ alb endpoint
 */
 
 provider "aws" {
+    version = "2.19.0"
     region = "${var.aws_region}"
 }
 

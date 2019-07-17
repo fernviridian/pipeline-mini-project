@@ -117,6 +117,11 @@ resource "aws_ecs_service" "flask" {
   #  container_name   = "flask"
   #  container_port   = 80
   #}
+  # Tell terraform to ignore future updates to task_definition that CodePipeline creates during deployments
+  # This means this service is used as a framework to "bootstrap" the ECS Service, and CodePipeline takes over from there
+  lifecycle {
+    ignore_changes = ["task_definition"]
+  }
 
 }
 resource "aws_ecs_task_definition" "flask" {

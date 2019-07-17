@@ -167,6 +167,23 @@ resource "aws_codepipeline" "codepipeline" {
     type     = "S3"
   }
 
+  # Workaround for Terraform insisting on "updating" OAuthToken every run. This
+  # will prevent *any* updates to this CodePipeline resource while in place. In
+  # the event that any real updates are needed, comment out the `lifecycle`
+  # block, run `terraform apply`, and then restore the block.
+  #
+  # https://github.com/terraform-providers/terraform-provider-aws/issues/2854
+  # https://www.terraform.io/docs/configuration/resources.html#ignore_changes
+  lifecycle {
+    # ignore_changes = all
+    # just ignore stage 0, which is the source stage, is a bit more selective than ignore all changes to the codepipeline resource
+    ignore_changes = [stage[0]]
+  }
+  # TODO how does this operate on a fresh install of codepipeline in a fresh AWS account?
+
+  # https://github.com/terraform-providers/terraform-provider-aws/issues/2854#issuecomment-490998073
+  # workaround since terraform insists that the OAuth token changes for each terraform apply
+  # so we ignore the lifecycle of the token so we get clean applys
   stage {
     name = "Source"
 

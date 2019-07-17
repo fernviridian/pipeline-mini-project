@@ -48,3 +48,10 @@ class TestApp():
         acceptable_keys = ["timestamp", "message"]
         for key in response.json:
             assert(key in acceptable_keys)
+
+    def test_info(self):
+        '''
+        Test to check hostname is returned as data
+        '''
+        response = self.app.get('/')
+        assert(response.data is not None)

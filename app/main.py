@@ -1,9 +1,13 @@
 from flask import Flask
 from flask import jsonify
 import time
+import socket
 
 app = Flask(__name__)
 
+@app.route("/")
+def info():
+    return socket.gethostname()
 
 @app.route("/time")
 def automation_time():
