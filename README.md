@@ -98,7 +98,7 @@ aws_secret_access_key = <redacted>
 
 This demo uses [Terraform](https://www.terraform.io/) for infrastructure-as-code configuration to configure AWS resources for the deployment pipeline.
 
-We can install T erraform from https://www.terraform.io/downloads.html, but for this demo, version `0.12.4` was used. The following links are for Linux and Mac, respectively:
+We can install Terraform from https://www.terraform.io/downloads.html, but for this demo, version `0.12.4` was used. The following links are for Linux and Mac, respectively:
 * (MacOS) https://releases.hashicorp.com/terraform/0.12.4/terraform_0.12.4_darwin_amd64.zip
 * (Linux) https://releases.hashicorp.com/terraform/0.12.4/terraform_0.12.4_linux_amd64.zip
 
@@ -120,38 +120,40 @@ cd terraform-config
 
 We need to configure the Terraform variables, so take a look at `terraform.tfvars`. Make sure the repository information is correct, and that you follow the instructions on how to configure your Github token we created previously.
 
-Now for the fun part! One "click" deploy with the following command (usually takes around X minutes):
+Now for the fun part! One "click" deploy with the following command (usually takes around 3-5 minutes):
 ```
 # when prompted, type yes to deploy resources
 ../terraform apply
 ```
 
-Terraform will output the Load Balancer URL of the application, which can be visited in a browser. Alternatively you can use `curl` to make requests to the new API:
+Terraform will output the Load Balancer URL of the application. Please wait a few minutes for Flask ECS task to start (this usually takes about 10 minutes to run the pipeline and deploy). If they have not started yet, you will get HTTP 503 errors. Next, you will likely see the default nginx page, since we use nginx as a placeholder before the first deployment of the Flask Application. You can check the status of the Flask Deployment in the AWS Console --> CodePipeline --> Pipelines --> demo. 
+
+Once the service is up and running, you can view the URL in a browser, or alternatively you can use `curl` to make requests to the new API:
 
 ```
 curl <load balancer url>/time
 ```
 
-Please note that the project uses a nginx server as a placeholder while the first service docker image is built and deployed. You may have to manually trigger the pipeline to deploy the flask application. You can do this by going to the AWS Console (https://console.aws.amazon.com), signing in, and navigating to CodePipeline --> demo --> Click "Release Change" and confirm with "Release". This will "kick" the pipeline off again, resulting in a deployment after tests and packaging stages are completed.
+Please note that the project uses a nginx server as a placeholder while the first service docker image is built and deployed. Under normal circumstances you should not have to manually trigger the CodePipeline if the variables for GitHub are configured properly. 
+
+Now, if this is not the case, you may have to manually trigger the pipeline to deploy the flask application. You can do this by going to the AWS Console (https://console.aws.amazon.com), signing in, and navigating to CodePipeline --> demo --> Click "Release Change" and confirm with "Release". This will "kick" the pipeline off, resulting in a deployment after tests and packaging stages are completed.
 
 # Teardown
 
-We can destroy all Terraform managed resources with the following command (usually takes around X minutes):
+We can destroy all Terraform managed resources with the following command (usually takes around 10 minutes):
 
 ```
 cd terraform-config
 ../terraform destroy
 ```
 
-Note: There is an issue with Terraform + Fargate where the Service is deleted during the `destroy` operation, but the tasks are not removed: https://github.com/terraform-providers/terraform-provider-aws/issues/3414#issuecomment-475345869. If this happens, you will see log messages during destroy such as: 
+Note: There is an issue with Terraform + Fargate where the ECS Service is deleted during the `destroy` operation, but the tasks are not removed: https://github.com/terraform-providers/terraform-provider-aws/issues/3414#issuecomment-475345869. If this happens (it seems inconsistent), you will see log messages during destroy such as: 
 ```
 aws_ecs_service.flask: Still destroying... [id=arn:aws:ecs:us-west-2:<ACCTID>:service/flask, 5m50s elapsed]
 ```
-If this continues for more than an minute (in the above case, almost 6 minutes), go into the AWS console --> ECS --> Cluster --> demo --> Tasks --> delete both tasks.
+If this continues for more than about 10 minutes, go into the AWS console --> ECS --> Cluster --> demo --> Tasks --> delete both tasks.
 
 Alternatively, during the `terraform destroy` operation, you can hit `CTRL+C` to quit (wait for the process to gracefully close), and then restart the `destroy` operation. This also seems to circumvent the bug that is mentioned in that GitHub issue.
-
-We were so close to "one-click" destroys ... :'(
 
 # Future Improvements
 
