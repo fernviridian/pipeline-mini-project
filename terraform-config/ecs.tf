@@ -99,7 +99,6 @@ resource "aws_ecs_service" "flask" {
   name            = "flask"
   cluster         = "${aws_ecs_cluster.demo.id}"
   task_definition = "${aws_ecs_task_definition.flask.arn}"
-  #iam_role        = "${aws_iam_role.iam_ecs_service_role.arn}"
   launch_type     = "FARGATE"
   desired_count   = "${var.app_desired_count}"
 

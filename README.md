@@ -16,6 +16,7 @@ The following AWS services are used:
 * Elastic Container Registry (ECR)
 * Virtual Private Cloud (VPC) (subnet, route, security groups, etc)
 * Identity and Access Management (IAM)
+* Simple Storage Service (S3)
 
 Deployment Software used:
 * Terraform (https://terraform.io)
@@ -119,7 +120,7 @@ cd terraform-config
 
 We need to configure the Terraform variables, so take a look at `terraform.tfvars`. Make sure the repository information is correct, and that you follow the instructions on how to configure your Github token we created previously.
 
-Now for the fun part! One "click" deploy with the following command:
+Now for the fun part! One "click" deploy with the following command (usually takes around X minutes):
 ```
 # when prompted, type yes to deploy resources
 ../terraform apply
@@ -135,31 +136,39 @@ Please note that the project uses a nginx server as a placeholder while the firs
 
 # Teardown
 
+We can destroy all Terraform managed resources with the following command (usually takes around X minutes):
+
 ```
 cd terraform-config
 ../terraform destroy
 ```
 
+Note: There is an issue with Terraform + Fargate where the Service is deleted during the `destroy` operation, but the tasks are not removed: https://github.com/terraform-providers/terraform-provider-aws/issues/3414#issuecomment-475345869. If this happens, you will see log messages during destroy such as: 
+```
+aws_ecs_service.flask: Still destroying... [id=arn:aws:ecs:us-west-2:<ACCTID>:service/flask, 5m50s elapsed]
+```
+If this continues for more than an minute (in the above case, almost 6 minutes), go into the AWS console --> ECS --> Cluster --> demo --> Tasks --> delete both tasks.
+
+Alternatively, during the `terraform destroy` operation, you can hit `CTRL+C` to quit (wait for the process to gracefully close), and then restart the `destroy` operation. This also seems to circumvent the bug that is mentioned in that GitHub issue.
+
+We were so close to "one-click" destroys ... :'(
+
 # Future Improvements
 
-- load balancer
-- multiple instances -high availability
-- security testing
-- end ui/selnium testing
-- nice dns
-- post deploy acceptance test
+- security testing in CodePipeline
+- acceptance testing post-deploy
+- DNS configuration with a nice domain
 - blue/green deployment with codedeploy
-- better security groups
 - multiple environments (dev,stage,prod)
-- seperate linting and unit testing into distinct pipeline components
-- use setup.py script to separate dev and prod dependencies
-- flask version between test and run container better in sync
-- use branching strategy instead of just master
+- separate linting and unit testing into distinct pipeline components
+- use setup.py script to separate dev and prod dependencies for Flask app
+- Keep flask version between test and run container in sync better
+- use branching strategy instead of just deploying off master
 - generalize terraform configuration with modules (didnt want to do that for easy following without breaking files up for the time being)
-- terratest
-- alarms based on failures
-- use lambda post deploy validation test https://docs.aws.amazon.com/codedeploy/latest/userguide/reference-appspec-file-structure-hooks.html#appspec-hooks-ecs
-- autoscaling (https://gist.github.com/bradford-hamilton/c0aa213bdc3c83b67c6ffda71814ee18#file-auto_scaling-tf)
+- terratest to test terraform configuration
+- alarms based on failures of deploys
+- use lambda post deploy [validation test](https://docs.aws.amazon.com/codedeploy/latest/userguide/)reference-appspec-file-structure-hooks.html#appspec-hooks-ecs
+- [autoscaling of ECS Task](https://gist.github.com/bradford-hamilton/c0aa213bdc3c83b67c6ffda71814ee18#file-auto_scaling-tf)
 
 # Resources
 
