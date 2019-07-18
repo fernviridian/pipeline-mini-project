@@ -7,7 +7,7 @@ resource "aws_subnet" "fargate" {
     cidr_block = "${element(split(",", var.fargate_cidrs), count.index)}"
     availability_zone = "${element(split(",", var.fargate_azs), count.index)}"
     count = "${length(split(",", var.fargate_cidrs))}"
-    map_public_ip_on_launch = true
+    map_public_ip_on_launch = "${var.assign_public_ip}"
 }
 
 resource "aws_subnet" "alb" {

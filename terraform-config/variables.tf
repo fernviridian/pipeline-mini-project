@@ -42,3 +42,15 @@ variable "assign_public_ip" {
     description = "Assign public ip to ECS Fargate Task"
     default = true
 }
+
+variable "load_balancer_port" {
+    default = 80
+}
+
+variable "health_check_path" {
+    default = "/"
+}
+
+variable "app_desired_count" {
+    default = 2
+}

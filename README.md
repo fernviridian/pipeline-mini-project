@@ -1,8 +1,10 @@
 # Introduction
 
-This project creates a Python Flask application, packaged in Docker, that is tested and deployed with AWS CodePipeline to AWS Elastic Container Service Fargate. It is designed to demonstrate application development, Continuous Integration (CI), and Continous Deployment (CD) on Amazon Web Services (AWS).  
+This project creates a Python Flask application, packaged in Docker, that is tested and deployed with AWS CodePipeline to AWS Elastic Container Service Fargate. It is designed to demonstrate application development, Continuous Integration (CI), and Continous Deployment (CD) on Amazon Web Services (AWS). 
 
 ![](./images/diagram.png)
+
+The Pipeline performs unit tests on the Flask application, checks the Python code formatting with the `flake8` linter, and the packages the application in a standalone Flask Docker container for deployment.
 
 ![](./images/pipeline.png)
 
@@ -115,6 +117,8 @@ cd terraform-config
 ../terraform init
 ```
 
+We need to configure the Terraform variables, so take a look at `terraform.tfvars`. Make sure the repository information is correct, and that you follow the instructions on how to configure your Github token we created previously.
+
 Now for the fun part! One "click" deploy with the following command:
 ```
 # when prompted, type yes to deploy resources
@@ -129,6 +133,12 @@ curl <load balancer url>/time
 
 Please note that the project uses a nginx server as a placeholder while the first service docker image is built and deployed. You may have to manually trigger the pipeline to deploy the flask application. You can do this by going to the AWS Console (https://console.aws.amazon.com), signing in, and navigating to CodePipeline --> demo --> Click "Release Change" and confirm with "Release". This will "kick" the pipeline off again, resulting in a deployment after tests and packaging stages are completed.
 
+# Teardown
+
+```
+cd terraform-config
+../terraform destroy
+```
 
 # Future Improvements
 
@@ -149,6 +159,7 @@ Please note that the project uses a nginx server as a placeholder while the firs
 - terratest
 - alarms based on failures
 - use lambda post deploy validation test https://docs.aws.amazon.com/codedeploy/latest/userguide/reference-appspec-file-structure-hooks.html#appspec-hooks-ecs
+- autoscaling (https://gist.github.com/bradford-hamilton/c0aa213bdc3c83b67c6ffda71814ee18#file-auto_scaling-tf)
 
 # Resources
 
@@ -162,4 +173,3 @@ Please note that the project uses a nginx server as a placeholder while the firs
 * https://github.com/jasonumiker/clair-ecs-fargate/blob/master/buildspec.yml
 * https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-cd-pipeline.html
 * https://medium.com/@bradford_hamilton/deploying-containers-on-amazons-ecs-using-fargate-and-terraform-part-2-2e6f6a3a957f
-

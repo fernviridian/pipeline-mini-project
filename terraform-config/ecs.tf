@@ -85,9 +85,7 @@ resource "aws_iam_role_policy" "ecs_task_role_policy" {
         "ecr:GetAuthorizationToken",
         "ecr:BatchCheckLayerAvailability",
         "ecr:GetDownloadUrlForLayer",
-        "ecr:BatchGetImage",
-        "logs:CreateLogStream",
-        "logs:PutLogEvents"
+        "ecr:BatchGetImage"
       ],
       "Resource": "*"
     }
@@ -101,27 +99,32 @@ resource "aws_ecs_service" "flask" {
   name            = "flask"
   cluster         = "${aws_ecs_cluster.demo.id}"
   task_definition = "${aws_ecs_task_definition.flask.arn}"
-  desired_count   = 1
   #iam_role        = "${aws_iam_role.iam_ecs_service_role.arn}"
-  depends_on      = ["aws_iam_role_policy.ecs_service_role_policy"]
   launch_type     = "FARGATE"
+  desired_count   = "${var.app_desired_count}"
 
   network_configuration {
-      subnets = ["${aws_subnet.fargate[0].id}"]
+      subnets = "${aws_subnet.fargate.*.id}"
       security_groups = ["${aws_security_group.ecs.id}"]
       assign_public_ip = "${var.assign_public_ip}"
   }
 
-  #load_balancer {
-  #  target_group_arn = "${aws_lb_target_group.foo.arn}"
-  #  container_name   = "flask"
-  #  container_port   = 80
-  #}
+  load_balancer {
+    target_group_arn = "${aws_alb_target_group.app.arn}"
+    container_name   = "flask"
+    container_port   = "${var.app_port}"
+  }
+
   # Tell terraform to ignore future updates to task_definition that CodePipeline creates during deployments
   # This means this service is used as a framework to "bootstrap" the ECS Service, and CodePipeline takes over from there
   lifecycle {
     ignore_changes = ["task_definition"]
   }
+
+  depends_on = [
+    "aws_alb_listener.front_end",
+    "aws_iam_role_policy.ecs_service_role_policy"
+  ]
 
 }
 resource "aws_ecs_task_definition" "flask" {

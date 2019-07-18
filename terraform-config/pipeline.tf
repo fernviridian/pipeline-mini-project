@@ -156,6 +156,9 @@ resource "aws_s3_bucket" "pipeline" {
   # make sure we have unique bucket name since all buckets share global namespace by using current aws account id
   bucket = "demo-pipeline-${data.aws_caller_identity.current.account_id}"
   acl    = "private"
+  # force destroy bucket objects to make clean teardown
+  # also, nothing in here is really that important, since git is the source of truth for app and infrastructure code ;)
+  force_destroy = true
 }
 
 resource "aws_codepipeline" "codepipeline" {
