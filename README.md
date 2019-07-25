@@ -130,6 +130,7 @@ Terraform will output the Load Balancer URL of the application. Please wait a fe
 
 Once the service is up and running, you can view the URL in a browser, or alternatively you can use `curl` to make requests to the new API:
 
+
 ```
 curl <load balancer url>/time
 ```
